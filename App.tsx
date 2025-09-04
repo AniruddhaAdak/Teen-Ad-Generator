@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback } from 'react';
 import { AdGeneratorForm } from './components/AdGeneratorForm';
 import { AdDisplay } from './components/AdDisplay';
 import { Header } from './components/Header';
 import { LoadingSpinner } from './components/LoadingSpinner';
-import { generateAds, getCreativeSuggestions } from './services/geminiService';
-import type { CampaignData, Ad } from './types';
+import { generateAds, getCreativeSuggestions, generateAdImage } from './services/geminiService';
+import type { CampaignData } from './types';
 import { SparklesIcon } from './components/icons/SparklesIcon';
 
 const App: React.FC = () => {
@@ -26,7 +25,12 @@ const App: React.FC = () => {
         setCampaignData(null);
         try {
             const data = await generateAds(prompt);
-            setCampaignData(data);
+            const adsWithImageState = data.ads.map(ad => ({
+                ...ad,
+                imageUrl: null,
+                isGeneratingImage: false,
+            }));
+            setCampaignData({ ...data, ads: adsWithImageState });
         } catch (err) {
             console.error(err);
             setError("Failed to generate ads. The AI might be busy, or there was an issue with the request. Please try again.");
@@ -60,6 +64,46 @@ const App: React.FC = () => {
             };
         });
     }, []);
+
+    const handleGenerateImage = useCallback(async (adId: number) => {
+        const adToUpdate = campaignData?.ads.find(ad => ad.id === adId);
+        if (!adToUpdate) return;
+
+        setCampaignData(prevData => {
+            if (!prevData) return null;
+            return {
+                ...prevData,
+                ads: prevData.ads.map(ad =>
+                    ad.id === adId ? { ...ad, isGeneratingImage: true } : ad
+                ),
+            };
+        });
+
+        try {
+            const imageUrl = await generateAdImage(adToUpdate.copy);
+            setCampaignData(prevData => {
+                if (!prevData) return null;
+                return {
+                    ...prevData,
+                    ads: prevData.ads.map(ad =>
+                        ad.id === adId ? { ...ad, imageUrl, isGeneratingImage: false } : ad
+                    ),
+                };
+            });
+        } catch (err) {
+            console.error("Failed to generate image:", err);
+            alert(`Failed to generate image for ad #${adId}. The AI might be busy. Please try again.`);
+            setCampaignData(prevData => {
+                if (!prevData) return null;
+                return {
+                    ...prevData,
+                    ads: prevData.ads.map(ad =>
+                        ad.id === adId ? { ...ad, isGeneratingImage: false } : ad
+                    ),
+                };
+            });
+        }
+    }, [campaignData]);
 
     return (
         <div className="min-h-screen bg-gray-900 font-sans text-gray-200">
@@ -97,7 +141,11 @@ const App: React.FC = () => {
                                 </div>
                             )}
                             {!isLoading && !error && campaignData && (
-                                <AdDisplay campaignData={campaignData} onUpdateAd={handleUpdateAdCopy} />
+                                <AdDisplay
+                                    campaignData={campaignData}
+                                    onUpdateAd={handleUpdateAdCopy}
+                                    onGenerateImage={handleGenerateImage}
+                                />
                             )}
                             {!isLoading && !error && !campaignData && (
                                 <div className="flex flex-col items-center justify-center h-full bg-gray-800/30 rounded-lg p-8 border-2 border-dashed border-gray-700">

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AdCard } from './AdCard';
 import type { CampaignData } from '../types';
@@ -6,9 +5,10 @@ import type { CampaignData } from '../types';
 interface AdDisplayProps {
     campaignData: CampaignData;
     onUpdateAd: (adId: number, newCopy: string) => void;
+    onGenerateImage: (adId: number) => void;
 }
 
-export const AdDisplay: React.FC<AdDisplayProps> = ({ campaignData, onUpdateAd }) => {
+export const AdDisplay: React.FC<AdDisplayProps> = ({ campaignData, onUpdateAd, onGenerateImage }) => {
     return (
         <div className="space-y-8 animate-fade-in">
             <div>
@@ -24,6 +24,7 @@ export const AdDisplay: React.FC<AdDisplayProps> = ({ campaignData, onUpdateAd }
                         key={ad.id}
                         ad={ad}
                         onUpdate={onUpdateAd}
+                        onGenerateImage={onGenerateImage}
                     />
                 ))}
             </div>

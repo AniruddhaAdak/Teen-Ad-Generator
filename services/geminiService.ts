@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { CampaignData } from '../types';
 
@@ -104,4 +103,25 @@ export const getCreativeSuggestions = async (currentPrompt: string): Promise<str
     });
     
     return response.text.trim().split('\n').filter(s => s.trim() !== '');
+};
+
+export const generateAdImage = async (prompt: string): Promise<string> => {
+    const fullPrompt = `A visually stunning, vibrant, and edgy advertisement image that perfectly captures this concept for a teenage audience: "${prompt}". The style should be modern, eye-catching, and social-media-ready.`;
+    
+    const response = await ai.models.generateImages({
+        model: 'imagen-4.0-generate-001',
+        prompt: fullPrompt,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: 'image/jpeg',
+          aspectRatio: '1:1',
+        },
+    });
+
+    if (response.generatedImages && response.generatedImages.length > 0) {
+        const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+        return `data:image/jpeg;base64,${base64ImageBytes}`;
+    } else {
+        throw new Error("Image generation failed or returned no images.");
+    }
 };
