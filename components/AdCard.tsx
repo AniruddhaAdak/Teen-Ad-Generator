@@ -75,7 +75,7 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onUpdate, onGenerateImage })
 
     return (
         <div className="bg-gray-800/60 p-5 rounded-lg border border-gray-700 flex flex-col justify-between transition-all duration-300 hover:border-brand-purple hover:shadow-2xl hover:shadow-brand-purple/10">
-            <div className="aspect-square w-full bg-gray-900/50 rounded-md mb-4 flex items-center justify-center relative overflow-hidden">
+            <div className="aspect-square w-full bg-gray-900/50 rounded-md mb-4 flex items-center justify-center relative overflow-hidden p-4 text-center">
                 {ad.isGeneratingImage ? (
                     <div className="flex flex-col items-center">
                         <LoadingSpinner />
@@ -83,6 +83,20 @@ export const AdCard: React.FC<AdCardProps> = ({ ad, onUpdate, onGenerateImage })
                     </div>
                 ) : ad.imageUrl ? (
                     <img src={ad.imageUrl} alt={`AI generated ad for: ${ad.copy.substring(0, 30)}...`} className="w-full h-full object-cover" />
+                ) : ad.imageError ? (
+                    <div className="flex flex-col items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-sm font-semibold text-red-300">Image Generation Failed</p>
+                        <p className="text-xs text-red-400/80 max-w-full truncate" title={ad.imageError}>{ad.imageError}</p>
+                        <button
+                            onClick={() => onGenerateImage(ad.id)}
+                            className="mt-2 px-3 py-1 text-xs font-bold text-white bg-brand-purple rounded-md hover:opacity-90 transition-opacity"
+                        >
+                            Try Again
+                        </button>
+                    </div>
                 ) : (
                     <button
                         onClick={() => onGenerateImage(ad.id)}

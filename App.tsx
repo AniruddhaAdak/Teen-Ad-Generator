@@ -29,6 +29,7 @@ const App: React.FC = () => {
                 ...ad,
                 imageUrl: null,
                 isGeneratingImage: false,
+                imageError: null,
             }));
             setCampaignData({ ...data, ads: adsWithImageState });
         } catch (err) {
@@ -74,7 +75,7 @@ const App: React.FC = () => {
             return {
                 ...prevData,
                 ads: prevData.ads.map(ad =>
-                    ad.id === adId ? { ...ad, isGeneratingImage: true } : ad
+                    ad.id === adId ? { ...ad, isGeneratingImage: true, imageError: null } : ad
                 ),
             };
         });
@@ -86,19 +87,35 @@ const App: React.FC = () => {
                 return {
                     ...prevData,
                     ads: prevData.ads.map(ad =>
-                        ad.id === adId ? { ...ad, imageUrl, isGeneratingImage: false } : ad
+                        ad.id === adId ? { ...ad, imageUrl, isGeneratingImage: false, imageError: null } : ad
                     ),
                 };
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to generate image:", err);
-            alert(`Failed to generate image for ad #${adId}. The AI might be busy. Please try again.`);
+            let errorMessage = "An unknown error occurred. Please try again.";
+            
+            try {
+                const errorJson = JSON.parse(err.message);
+                if (errorJson?.error?.message) {
+                    errorMessage = errorJson.error.message;
+                }
+            } catch (parseError) {
+                if (err.message) {
+                    errorMessage = err.message;
+                }
+            }
+
+            if (errorMessage.toLowerCase().includes("quota") || errorMessage.toLowerCase().includes("rate limit")) {
+                errorMessage = "API quota exceeded. Please check your plan or try again later.";
+            }
+
             setCampaignData(prevData => {
                 if (!prevData) return null;
                 return {
                     ...prevData,
                     ads: prevData.ads.map(ad =>
-                        ad.id === adId ? { ...ad, isGeneratingImage: false } : ad
+                        ad.id === adId ? { ...ad, isGeneratingImage: false, imageError: errorMessage } : ad
                     ),
                 };
             });
